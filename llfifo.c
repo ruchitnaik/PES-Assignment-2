@@ -58,12 +58,12 @@ int llfifo_enqueue(llfifo_t *fifo, void *element) {
         // Change to Right Logic - Incorrect Logic 
         fifo->rear->next->key = *ele;
         fifo->rear->next->next = NULL;
-        fifo->rear->key = *ele;
-        fifo->rear->next = NULL;
+        fifo->rear->key = fifo->rear->next->key;
+        fifo->rear->next = fifo->rear->next->next;
 
     }
     else {
-
+        
     }
 }
 
