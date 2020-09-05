@@ -8,6 +8,11 @@
 #ifndef _LLFIFO_H_
 #define _LLFIFO_H_
 
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+
 /* 
  * The llfifo's main data structure. 
  *
