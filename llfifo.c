@@ -1,3 +1,6 @@
+#ifndef _LLFIFO_C_
+#define _LLFIFO_C_
+
 #include "llfifo.h"
 
 typedef struct QNode { 
@@ -19,23 +22,36 @@ node* newNode(void *k)
     return temp; 
 } 
 
+/*
+ * Initializes the FIFO
+ *
+ * Parameters:
+ *   capacity  the initial size of the fifo, in number of elements
+ * 
+ * Returns:
+ *   A pointer to an llfifo_t, or NULL in case of an error.
+ */
 llfifo_t *llfifo_create(int capacity) {
-    void* initial_data;
-    llfifo_t* fifo = (llfifo_t*)malloc(sizeof(llfifo_t));
-    fifo->storednodes = 0;
-    fifo->allocatednodes = capacity;
-    fifo->front = fifo->rear = fifo->read = NULL; 
-    node* temp = newNode(initial_data);
-    for(int i=0; i<capacity; i++) {
-        if (i==0) {
-            if(fifo->rear == NULL) 
-                fifo->front = fifo->rear = fifo->read = temp;
+    if(capacity>0) {
+        void* initial_data;
+        llfifo_t* fifo = (llfifo_t*)malloc(sizeof(llfifo_t));
+        fifo->storednodes = 0;
+        fifo->allocatednodes = capacity;
+        fifo->front = fifo->rear = fifo->read = NULL; 
+        node* temp = newNode(initial_data);
+        for(int i=0; i<capacity; i++) {
+            if (i==0) {
+                if(fifo->rear == NULL) 
+                    fifo->front = fifo->rear = fifo->read = temp;
+            }
+            // Add the new node at the end of queue and change rear 
+            fifo->rear->next = temp; 
+            fifo->rear = temp; 
         }
-        // Add the new node at the end of queue and change rear 
-        fifo->rear->next = temp; 
-        fifo->rear = temp; 
+        return fifo;
     }
-    return fifo;
+    else 
+        return NULL;
 }
 
 /*
@@ -147,6 +163,8 @@ void llfifo_destroy(llfifo_t *fifo) {
         free(temp);
     }
 }
+
+#endif // _LLFIFO_C_
 
 // typedef struct llfifo_s {
     
