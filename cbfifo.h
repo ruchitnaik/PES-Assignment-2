@@ -9,6 +9,26 @@
 #define _CBFIFO_H_
 
 #include <stdlib.h>  // for size_t
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <assert.h>
+
+#define SIZE 128
+
+
+
+/* 
+ * The cbfifo's main data structure. 
+ *
+ * Defined here as an incomplete type, in order to hide the
+ * implementation from the user. You will need to define this struct
+ * in your .c file.
+ */
+typedef struct cbfifo_s cbfifo_t;
+
+
+cbfifo_t *cbfifo_create(size_t size);
 
 /*
  * Enqueues data onto the FIFO, up to the limit of the available FIFO
