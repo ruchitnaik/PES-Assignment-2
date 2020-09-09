@@ -54,14 +54,19 @@ int test_llfifo_enqueue()
   } test_matrix_t;
   
   int act_ret;
-  int temp = 1;
-  char c= 'a';
-  int temp2 = INT32_MAX;
+  typedef struct test_struct {
+    int x;
+    char y;
+  } test_st;
+  test_st object;
+  object.x = 1;
+  object.y = 'a';
   test_matrix_t tests[] =
     { 
-      {&temp, 1},
-      {&c, 2},
-      {&temp2, 3},
+      {(void*)INT8_MAX, 1},
+      {(void*)INT16_MAX, 2},
+      {(void*)INT32_MAX, 3},
+      {&object, 4},
       {NULL, -1}
     };
 
@@ -79,7 +84,7 @@ int test_llfifo_enqueue()
       test_result = "FAILED";
     }
     
-    printf("\n  %s: llfifo_enqueue(fifo, %p) returned %d expected %d ", test_result,
+    printf("\n  %s: llfifo_enqueue(fifo, %ld) returned %d expected %d ", test_result,
         tests[i].element, act_ret, tests[i].expected_res);
   }
 
@@ -93,24 +98,45 @@ int test_llfifo_dequeue()
   llfifo_t* fifo;
   size_t len;
   fifo = llfifo_create(6);
-  int temp = 1;
-  char c = 'a';
-  int temp2 = 20;
-  len = llfifo_enqueue(fifo, &temp);
+  int a = INT8_MAX;
+  int b = INT16_MAX;
+  int c = INT32_MAX;
+  char ch = 'a';
+  typedef struct test_struct {
+    int x;
+    char y;
+  } test_st;
+  test_st object;
+  object.x = 1;
+  object.y = 'a';
+  char str[] = "papiha";
+
+  len = llfifo_enqueue(fifo, &a);
+  len = llfifo_enqueue(fifo, &b);
   len = llfifo_enqueue(fifo, &c);
-  len = llfifo_enqueue(fifo, &temp2);
+  len = llfifo_enqueue(fifo, &object);
+  len = llfifo_enqueue(fifo, str);
+  len = llfifo_enqueue(fifo, &a);
+  len = llfifo_enqueue(fifo, &b);
+  len = llfifo_enqueue(fifo, &c);
+
   typedef struct {
-    int expected_res;
+    void* expected_res;
   } test_matrix_t;
   
   void* act_ret;
   test_matrix_t tests[] =
     { 
-      {temp},
-      {c},
-      {temp2},
-      {NULL},
-      {NULL}
+      {&a},
+      {&b},
+      {&c},
+      {&object},
+      {str},
+      {&a},
+      {&b},
+      {&c},
+      // {NULL},
+      // {NULL}
     };
 
   const int num_tests = sizeof(tests) / sizeof(test_matrix_t);
@@ -119,21 +145,20 @@ int test_llfifo_dequeue()
 
   for(int i=0; i<num_tests; i++) {
     act_ret = llfifo_dequeue(fifo);
-    printf("\n%d", i);
-    if ( (*((unsigned char*)act_ret) == (unsigned char)tests[i].expected_res) || (act_ret == tests[i].expected_res)  ) {
+    if ( (*(unsigned char* )act_ret == *(unsigned char*) tests[i].expected_res) || (act_ret == NULL && (int )tests[i].expected_res == 0) )  {
       test_result = "PASSED";
       tests_passed++;
     } else {
       test_result = "FAILED";
     }
     
-    // printf("\n  %s: llfifo_dequeue() returned %d expected %d ", test_result,
-    //      *((unsigned char*)act_ret), (unsigned char)tests[i].expected_res);
+    printf("\n  %s: llfifo_dequeue() returned %d expected %d ", test_result,
+         *(unsigned char* )act_ret, *(unsigned char*) tests[i].expected_res);
   }
 
-  // printf("\n %s: PASSED %d/%d\n", __FUNCTION__, tests_passed, num_tests);
+  printf("\n %s: PASSED %d/%d\n", __FUNCTION__, tests_passed, num_tests);
   llfifo_destroy(fifo);
-  // return (tests_passed == num_tests);
+  return (tests_passed == num_tests);
 }
 
 int main() {
@@ -142,6 +167,7 @@ int main() {
   // assert(pass);
   // pass = test_llfifo_enqueue();
   // assert(pass);
-  test_llfifo_dequeue();
-  // assert(pass);
+  pass = test_llfifo_dequeue();
+  assert(pass);
+  return 0;
 }

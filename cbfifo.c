@@ -58,33 +58,33 @@ static void retreat_pointer()
 }
 
 cbfifo_t *cbfifo_create(size_t size) {
-    cbfifo_t* fifo = malloc(sizeof(cbfifo_t));
+    // cbfifo_t* fifo = malloc(sizeof(cbfifo_t));
+    fifo = malloc(sizeof(cbfifo_t));
     assert(fifo);
     fifo-> buff = NULL;
-    fifo-> size = SIZE;
+    fifo-> size = size;
     fifo->storedbytes = 0;
     cbfifo_reset();
+    return fifo;
 }
 
-void cb_overwrite_overflow(void *data, size_t nbyte)
-{   
-    const unsigned char* buf = (const unsigned char*) data;
-	assert(fifo);
-    fifo->buff[fifo->head] = buf;
-    update_ptr_status();
-}
 
-int cb_handle_overflow(void *data, size_t nbyte)
+int cb_handle_overflow(void *buf, size_t nbyte)
 {
     int r = -1;
-    const uint8_t *buf = (const uint8_t*) data;
+    assert(buf);
+    uint8_t *data = (uint8_t*) buf;
+    for(int i =0; i < nbyte; i++)
+        printf("\n %d", data[i]);
     assert(fifo);
     if(!cbfifo_full(fifo))
     {
-        fifo->buff[fifo->head] = data;
-        for(int i =0; i < nbyte; i++) {
-            fifo->buff[fifo->head] = buf[i];
-            update_ptr_status();
+        // fifo->buff[fifo->head] = data;
+        for(int i =0; data[i] != '\0'; i++) {
+            // printf("%c", *(char*)data[i]  );
+            fifo->buff[fifo->head] = data[i];
+            // update_ptr_status();
+            r = 0;
         }
     }
     return r;
@@ -95,8 +95,10 @@ size_t cbfifo_enqueue(void *buf, size_t nbyte) {
     int r = 0, prev = 0, latest_size = 0;
     assert(buf && nbyte);
     size_t len = cbfifo_length();
-    if(len + nbyte > fifo->size)
+    
+    if(len + nbyte > fifo->size) {
         return -1;
+    }
     else {
         r = cb_handle_overflow(buf, nbyte);
     }
@@ -107,16 +109,15 @@ size_t cbfifo_enqueue(void *buf, size_t nbyte) {
 
 size_t cbfifo_dequeue(void *buf, size_t nbyte) {
 
-    uint8_t *buffer = (const uint8_t*) buf;
+    uint8_t *buffer = (uint8_t*) buf;
     assert(fifo && buffer && fifo->buff);
-    size_t len = 0;
     int r = -1;
     size_t len = cbfifo_length();
     if(len - nbyte < 0)
         return -1;
     
     for(int i=0; i < nbyte; i++) {
-        if(!circular_buf_empty(fifo))
+        if(!cbfifo_empty(fifo))
         {
             *buffer = fifo->buff[fifo->tail];
             retreat_pointer(fifo);
@@ -127,7 +128,6 @@ size_t cbfifo_dequeue(void *buf, size_t nbyte) {
 
     return len;
 }
-
 
 size_t cbfifo_length() {
     
@@ -147,7 +147,14 @@ size_t cbfifo_capacity() {
 }
 
 int main() {
-    fifo = cbfifo_create(SIZE);
+    cbfifo_t* fifo;
+    fifo = cbfifo_create(10);
+    printf("\n Max size :%d", fifo->size);
+    printf("\n Length: %d", cbfifo_length());
+    printf("\n Enquing Data");
+    char str[] = "arpit";
+    size_t len = cbfifo_enqueue(str, sizeof(str));
+    printf("\n Length: %d", len);
 }
 
 

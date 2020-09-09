@@ -4,18 +4,18 @@
 #include "llfifo.h"
 
 typedef struct Node { 
-    unsigned char* key; 
+    void* key; 
     struct Node* next; 
 } node; 
 
 typedef struct llfifo_s { 
-    node *front, *rear, *read;
+    node *front, *rear;
     size_t allocatednodes;
     size_t storednodes;
-    unsigned char* val;
+    void* val;
 } llfifo_t; 
 
-node* newNode(unsigned char* ele) 
+node* newNode(void* ele) 
 { 
     node* temp = (node*)malloc(sizeof(node)); 
     temp->key = ele;
@@ -36,7 +36,7 @@ llfifo_t *llfifo_create(int capacity) {
     if(capacity >= 0) {
         llfifo_t* fifo = (llfifo_t*)malloc(sizeof(llfifo_t));
         fifo->storednodes = 0;
-        fifo->val = 0;
+        fifo->val = NULL;
         fifo->allocatednodes = capacity;
         fifo->front = fifo->rear = NULL; 
         return fifo;
@@ -84,14 +84,15 @@ int llfifo_capacity(llfifo_t *fifo) {
  */
 int llfifo_enqueue(llfifo_t *fifo, void *element) {
 
-    if(element) {
+    if(element && fifo) {
         // Create a new LL node 
-        unsigned char* ele = (unsigned char*)element;
-        node* temp = newNode(ele);
+        node* temp = newNode(element);
 
         // If queue is empty, then new node is front and rear both 
         if (fifo->rear == NULL) { 
-            fifo->front = fifo->rear = fifo->read = temp; 
+            fifo->front = fifo->rear = temp; 
+            fifo->storednodes++;
+            return llfifo_length(fifo);
         } 
         // Add the new node at the end of queue and change rear 
         fifo->rear->next = temp; 
