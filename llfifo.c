@@ -83,19 +83,26 @@ int llfifo_capacity(llfifo_t *fifo) {
  *   The new length of the FIFO on success, -1 on failure
  */
 int llfifo_enqueue(llfifo_t *fifo, void *element) {
-    // Create a new LL node 
-    unsigned char* ele = (unsigned char*)element;
-    node* temp = newNode(ele);
 
-    // If queue is empty, then new node is front and rear both 
-    if (fifo->rear == NULL) { 
-        fifo->front = fifo->rear = fifo->read = temp; 
-    } 
-    // Add the new node at the end of queue and change rear 
-    fifo->rear->next = temp; 
-    fifo->rear = temp;
-    fifo->storednodes++; 
-    return llfifo_length(fifo); 
+    if(element) {
+        // Create a new LL node 
+        unsigned char* ele = (unsigned char*)element;
+        node* temp = newNode(ele);
+
+        // If queue is empty, then new node is front and rear both 
+        if (fifo->rear == NULL) { 
+            fifo->front = fifo->rear = fifo->read = temp; 
+        } 
+        // Add the new node at the end of queue and change rear 
+        fifo->rear->next = temp; 
+        fifo->rear = temp;
+        fifo->storednodes++; 
+        return llfifo_length(fifo);
+    }
+    else {
+            return -1;
+    }
+     
 }
 
 /*
@@ -109,21 +116,23 @@ int llfifo_enqueue(llfifo_t *fifo, void *element) {
  */
 void *llfifo_dequeue(llfifo_t *fifo) {
     // If queue is empty, return NULL. 
-    if (fifo->front == NULL) 
+    if (fifo->storednodes <= 0) {
+        fifo->front = NULL;
+        fifo->rear = NULL; 
         return NULL; 
-  
+    }
     // Store previous front and move front one node ahead 
     node* temp = fifo->front; 
     fifo->front = fifo->front->next; 
     fifo->storednodes--;
     // If front becomes NULL, then change rear also as NULL 
-    if (fifo->front == NULL) {
+    if (fifo->front == NULL ) {
         fifo->rear = NULL; 
         fifo->storednodes = 0;
     }
     fifo->val = temp->key;
     free(temp);
-    return &fifo->val;
+    return fifo->val;
 }
 
 /*
@@ -139,10 +148,17 @@ void *llfifo_dequeue(llfifo_t *fifo) {
  */
 void llfifo_destroy(llfifo_t *fifo) {
 
-    while(fifo->front == NULL && fifo-> rear == NULL) {
-        llfifo_dequeue(fifo);
+    if(fifo) {
+        void* temp;
+        while(fifo->storednodes != 0) {
+            temp = llfifo_dequeue(fifo);
+        }
+        free(fifo);
+        return;
     }
-    free(fifo);
+    else {
+        return;
+    }
 }
 
 #endif // _LLFIFO_C_
