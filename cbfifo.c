@@ -1,6 +1,6 @@
 #include "cbfifo.h"
 
- 
+bool created = false;
 
 typedef struct cbfifo_s { 
     uint8_t * buff;
@@ -8,9 +8,11 @@ typedef struct cbfifo_s {
     size_t size;
     bool full_status;
     size_t storedbytes;
+    size_t last_nbyte;
 } cbfifo_t; 
 
 cbfifo_t* fifo;
+
 
 bool cbfifo_full()
 {
@@ -41,8 +43,7 @@ void cbfifo_reset()
 static void update_ptr_status()
 {
 	assert(fifo);
-	if(fifo->full_status)
-   	{
+	if(fifo->full_status) {
 		fifo->tail = (fifo->tail + 1) % fifo->size;
 	}
 	fifo->head = (fifo->head + 1) % fifo->size;
@@ -57,53 +58,64 @@ static void retreat_pointer()
 	fifo->tail = (fifo->tail + 1) % fifo->size;
 }
 
-cbfifo_t *cbfifo_create(size_t size) {
-    // cbfifo_t* fifo = malloc(sizeof(cbfifo_t));
+void cbfifo_create() {
+
     fifo = malloc(sizeof(cbfifo_t));
     assert(fifo);
-    fifo-> buff = NULL;
-    fifo-> size = size;
+    fifo-> buff = (uint8_t *)malloc(SIZE * sizeof(uint8_t));
+    if(fifo-> buff == NULL) {
+        exit(0);
+    }
+    fifo-> size = SIZE;
     fifo->storedbytes = 0;
-    cbfifo_reset();
-    return fifo;
+    fifo->head = 0;
+    fifo->tail = 0;
+    fifo->full_status = false;
+    fifo->last_nbyte = 0;
+    created = true;
 }
 
 
 int cb_handle_overflow(void *buf, size_t nbyte)
 {
-    int r = -1;
-    assert(buf);
+    int r = 0;
+    if (buf && fifo->buff) {
     uint8_t *data = (uint8_t*) buf;
-    for(int i =0; i < nbyte; i++)
-        printf("\n %d", data[i]);
     assert(fifo);
     if(!cbfifo_full(fifo))
     {
-        // fifo->buff[fifo->head] = data;
-        for(int i =0; data[i] != '\0'; i++) {
-            // printf("%c", *(char*)data[i]  );
-            fifo->buff[fifo->head] = data[i];
-            // update_ptr_status();
-            r = 0;
+        for(int i =0; *(uint8_t*) (data + i) != '\0' ; i++) {
+           *(uint8_t*) (fifo->buff + i) = *(uint8_t*) (data + fifo->head);
+            update_ptr_status();
+            r++;
         }
+        fifo->last_nbyte = r;
     }
     return r;
+    }
+
 }
 
 size_t cbfifo_enqueue(void *buf, size_t nbyte) {
 
-    int r = 0, prev = 0, latest_size = 0;
-    assert(buf && nbyte);
-    size_t len = cbfifo_length();
-    
-    if(len + nbyte > fifo->size) {
-        return -1;
+    if (!created) {
+    cbfifo_create(); 
     }
-    else {
-        r = cb_handle_overflow(buf, nbyte);
-    }
+    if (created) {
 
-    return (cbfifo_length() - len);
+        int r = 0;
+        assert(buf && nbyte);
+        size_t len = cbfifo_length();
+        if(len + nbyte > fifo->size) {
+            return -1;
+        }
+        else {
+            r = cb_handle_overflow(buf, nbyte);
+        }
+        // free(fifo->buff);
+        return (fifo->storedbytes);
+        
+    }
 }
 
 
@@ -111,7 +123,6 @@ size_t cbfifo_dequeue(void *buf, size_t nbyte) {
 
     uint8_t *buffer = (uint8_t*) buf;
     assert(fifo && buffer && fifo->buff);
-    int r = -1;
     size_t len = cbfifo_length();
     if(len - nbyte < 0)
         return -1;
@@ -119,10 +130,9 @@ size_t cbfifo_dequeue(void *buf, size_t nbyte) {
     for(int i=0; i < nbyte; i++) {
         if(!cbfifo_empty(fifo))
         {
-            *buffer = fifo->buff[fifo->tail];
+            *(uint8_t*) (buffer + i) = *(uint8_t*) (fifo->buff + fifo->tail  ) ;
             retreat_pointer(fifo);
-            buffer++;
-            len++;
+            len--;
         }
     }
 
@@ -135,26 +145,17 @@ size_t cbfifo_length() {
     size_t size = fifo->size;
     if(!fifo->full_status) {
         if(fifo->head >= fifo->tail) {
-            size = (fifo->tail - fifo->head);
+            size = (fifo->head - fifo->tail);
         }
         else {
             size = fifo->size + fifo->head - fifo->tail;
         }
     }
+    return size;
 }
 size_t cbfifo_capacity() {
     return fifo->size;
 }
 
-int main() {
-    cbfifo_t* fifo;
-    fifo = cbfifo_create(10);
-    printf("\n Max size :%d", fifo->size);
-    printf("\n Length: %d", cbfifo_length());
-    printf("\n Enquing Data");
-    char str[] = "arpit";
-    size_t len = cbfifo_enqueue(str, sizeof(str));
-    printf("\n Length: %d", len);
-}
 
 

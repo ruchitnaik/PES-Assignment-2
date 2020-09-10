@@ -13,8 +13,9 @@
 #include <stdbool.h>
 #include <string.h>
 #include <assert.h>
+#include <stdio.h>
 
-#define SIZE 128
+#define SIZE 10
 
 
 
@@ -28,7 +29,7 @@
 typedef struct cbfifo_s cbfifo_t;
 
 
-cbfifo_t *cbfifo_create(size_t size);
+// cbfifo_t *cbfifo_create(size_t size);
 
 /*
  * Enqueues data onto the FIFO, up to the limit of the available FIFO
