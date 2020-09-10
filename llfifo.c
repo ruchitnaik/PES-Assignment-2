@@ -68,7 +68,10 @@ int llfifo_length(llfifo_t *fifo) {
  *   The current capacity, in number of elements, for the FIFO
  */
 int llfifo_capacity(llfifo_t *fifo) {
-    return fifo->allocatednodes;
+    if(fifo->allocatednodes >= 0)
+        return fifo->allocatednodes;
+    else
+        return NULL;
 }
 
 /*
@@ -83,8 +86,7 @@ int llfifo_capacity(llfifo_t *fifo) {
  *   The new length of the FIFO on success, -1 on failure
  */
 int llfifo_enqueue(llfifo_t *fifo, void *element) {
-
-    if(element && fifo) {
+    if(fifo) {
         // Create a new LL node 
         node* temp = newNode(element);
 
@@ -120,6 +122,7 @@ void *llfifo_dequeue(llfifo_t *fifo) {
     if (fifo->storednodes <= 0) {
         fifo->front = NULL;
         fifo->rear = NULL; 
+        printf("\n returning NULL ");
         return NULL; 
     }
     // Store previous front and move front one node ahead 
@@ -150,9 +153,8 @@ void *llfifo_dequeue(llfifo_t *fifo) {
 void llfifo_destroy(llfifo_t *fifo) {
 
     if(fifo) {
-        void* temp;
         while(fifo->storednodes != 0) {
-            temp = llfifo_dequeue(fifo);
+            void* temp = llfifo_dequeue(fifo);
         }
         free(fifo);
         return;
