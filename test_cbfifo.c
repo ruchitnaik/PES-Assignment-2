@@ -181,19 +181,14 @@ int test_cbfifo_dequeue()
 }
 
 
-int main()
+int cbfifo_main()
 {
-    int pass = 0;
-    pass = test_cbfifo_enqueue();
-    assert(pass);
-    pass = test_cbfifo_capacity();
-    assert(pass);
+    int pass = 1;
+    pass &= test_cbfifo_enqueue();
+    pass &= test_cbfifo_capacity();
     pass = test_cbfifo_length();
-    assert(pass);
     pass = test_cbfifo_dequeue();
-    assert(pass);
-     
     free(fifo->buff);
     cbfifo_free();
-    return 0;
+    return pass;
 }

@@ -230,15 +230,12 @@ int test_llfifo_capacity() {
   return (tests_passed == num_tests);
 }
 
-int main() {
-  int pass = 0;
-  pass = test_llfifo_create();
-  assert(pass);
-  pass = test_llfifo_enqueue();
-  assert(pass);
-  pass = test_llfifo_dequeue();
-  assert(pass);
-  pass = test_llfifo_capacity();
-  assert(pass);
-  return 0;
+int llfifo_main() {
+  int pass = 1;
+  pass &= test_llfifo_create();
+  pass &= test_llfifo_enqueue();
+  pass &= test_llfifo_dequeue();
+  pass &= test_llfifo_capacity();
+  
+  return pass;
 }
