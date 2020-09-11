@@ -1,3 +1,32 @@
+/******************************************************************************
+*​​Copyright​​ (C) ​​2020 ​​by ​​Arpit Savarkar
+*​​Redistribution,​​ modification ​​or ​​use ​​of ​​this ​​software ​​in​​source​ ​or ​​binary
+*​​forms​​ is​​ permitted​​ as​​ long​​ as​​ the​​ files​​ maintain​​ this​​ copyright.​​ Users​​ are
+*​​permitted​​ to ​​modify ​​this ​​and ​​use ​​it ​​to ​​learn ​​about ​​the ​​field​​ of ​​embedded
+*​​software. ​​Arpit Savarkar ​​and​ ​the ​​University ​​of ​​Colorado ​​are ​​not​ ​liable ​​for
+*​​any ​​misuse ​​of ​​this ​​material.
+*
+******************************************************************************/ 
+/**
+ * @file test_llfifo.c
+ * @brief An abstraction to test the functionalities of Linked List Based 
+ * Queue (FIFO) in llfifo.c 
+ * 
+ * This file provides functions and abstractions for handling and
+ * manipulating Circular Buffer
+ * 
+ * @author Arpit Savarkar
+ * @date September 10 2020
+ * @version 1.0
+ * 
+ * 
+  Sources of Reference :
+  Online Links : https://github.com/geekfactory/FIFO/blob/master/FIFO.h
+  Textbooks : Embedded Systems Fundamentals with Arm Cortex-M based MicroControllers 
+  I would like to thank the SA's of the course Rakesh Kumar, Saket Penurkar and Howdy Pierece for their 
+  support to debug the Linkedlist FIFO Implementation
+*/
+
 #include "llfifo.c"
 
 int test_llfifo_create()
@@ -7,7 +36,7 @@ int test_llfifo_create()
     llfifo_t *expected_val;
   } test_matrix_t;
 
-  llfifo_t* fifo;
+  llfifo_t* fifo =llfifo_create(0);
   test_matrix_t tests[] =
     { 
       {-1, NULL},
@@ -61,7 +90,7 @@ int test_llfifo_enqueue()
   act_ret = llfifo_enqueue(gigo, &temp_len);
 
   if (act_ret == -1 ) {
-    printf("\n  PASSED: Enquining to Uninitialized FIFO returned null ", act_ret);
+    printf("\n  PASSED: Enquining to Uninitialized FIFO returned null ");
   } else {
     printf("\n Uninitialized test failed ");
   }
@@ -114,15 +143,17 @@ int test_llfifo_dequeue()
   int c = INT32_MAX;
   char str[] = "papiha";
 
-  size_t len = 0;
-  len = llfifo_enqueue(fifo, &a);
+  size_t len = llfifo_enqueue(fifo, &a);
   len = llfifo_enqueue(fifo, &b);
   len = llfifo_enqueue(fifo, &c);
   len = llfifo_enqueue(fifo, str);
   len = llfifo_enqueue(fifo, &a);
   len = llfifo_enqueue(fifo, &b);
   len = llfifo_enqueue(fifo, &c);
-
+  if(len==0) {
+    len = 0;
+    return 0;
+  }
   typedef struct {
     void* expected_res;
   } test_matrix_t;
@@ -172,7 +203,6 @@ int test_llfifo_capacity() {
   int act_ret;
   test_matrix_t tests[] =
     { 
-      {NULL},
       {1},
       {2},
       {3}
@@ -181,7 +211,6 @@ int test_llfifo_capacity() {
   const int num_tests = sizeof(tests) / sizeof(test_matrix_t);
   int tests_passed = 0;
   char *test_result;
-  int val = 1;
   for(int i=0; i<num_tests; i++) {
     fifo = llfifo_create(tests[i].expected_res);
     act_ret = fifo->allocatednodes;

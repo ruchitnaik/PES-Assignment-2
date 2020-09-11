@@ -8,7 +8,7 @@
 *
 ******************************************************************************/ 
 /**
- * @file test_cbfifo.h
+ * @file test_cbfifo.c
  * @brief An abstraction to maintain and instantiate Ciruclar Buffer
  * instantiated globally in cbfifo.h
  * 

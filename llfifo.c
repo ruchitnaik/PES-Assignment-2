@@ -1,13 +1,44 @@
+/******************************************************************************
+*​​Copyright​​ (C) ​​2020 ​​by ​​Arpit Savarkar
+*​​Redistribution,​​ modification ​​or ​​use ​​of ​​this ​​software ​​in​​source​ ​or ​​binary
+*​​forms​​ is​​ permitted​​ as​​ long​​ as​​ the​​ files​​ maintain​​ this​​ copyright.​​ Users​​ are
+*​​permitted​​ to ​​modify ​​this ​​and ​​use ​​it ​​to ​​learn ​​about ​​the ​​field​​ of ​​embedded
+*​​software. ​​Arpit Savarkar ​​and​ ​the ​​University ​​of ​​Colorado ​​are ​​not​ ​liable ​​for
+*​​any ​​misuse ​​of ​​this ​​material.
+*
+******************************************************************************/ 
+/**
+ * @file llfifo.c
+ * @brief An abstraction to maintain and instantiate Linked List Based 
+ * Queue (FIFO) 
+ * 
+ * This file provides functions and abstractions for handling and
+ * manipulating Circular Buffer
+ * 
+ * @author Arpit Savarkar
+ * @date September 10 2020
+ * @version 1.0
+ * 
+ * 
+  Sources of Reference :
+  Online Links : https://github.com/geekfactory/FIFO/blob/master/FIFO.h
+  Textbooks : Embedded Systems Fundamentals with Arm Cortex-M based MicroControllers 
+  I would like to thank the SA's of the course Rakesh Kumar, Saket Penurkar and Howdy Pierece for their 
+  support to debug the Linkedlist FIFO Implementation
+*/
+
 #ifndef _LLFIFO_C_
 #define _LLFIFO_C_
 
 #include "llfifo.h"
 
+// Definition of the Node of the Linked List 
 typedef struct Node { 
     void* key; 
     struct Node* next; 
 } node; 
 
+// Structure definition for LLFIFO
 typedef struct llfifo_s { 
     node *front, *rear;
     size_t allocatednodes;
@@ -15,6 +46,8 @@ typedef struct llfifo_s {
     void* val;
 } llfifo_t; 
 
+
+// Helper Function to setup the nodes
 node* newNode(void* ele) 
 { 
     node* temp = (node*)malloc(sizeof(node)); 
@@ -34,7 +67,9 @@ node* newNode(void* ele)
  */
 llfifo_t *llfifo_create(int capacity) {
     if(capacity >= 0) {
+        // Dynamic Allocation of the Base
         llfifo_t* fifo = (llfifo_t*)malloc(sizeof(llfifo_t));
+        // Initially No Nodes Stored
         fifo->storednodes = 0;
         fifo->val = NULL;
         fifo->allocatednodes = capacity;
@@ -42,6 +77,7 @@ llfifo_t *llfifo_create(int capacity) {
         return fifo;
     }
     else 
+        // Error Handling 
         return NULL;
 }
 
@@ -70,8 +106,6 @@ int llfifo_length(llfifo_t *fifo) {
 int llfifo_capacity(llfifo_t *fifo) {
     if(fifo->allocatednodes >= 0)
         return fifo->allocatednodes;
-    else
-        return NULL;
 }
 
 /*
@@ -154,7 +188,7 @@ void llfifo_destroy(llfifo_t *fifo) {
 
     if(fifo) {
         while(fifo->storednodes != 0) {
-            void* temp = llfifo_dequeue(fifo);
+            llfifo_dequeue(fifo);
         }
         free(fifo);
         return;
