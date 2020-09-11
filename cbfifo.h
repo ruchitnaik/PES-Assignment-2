@@ -15,7 +15,7 @@
 #include <assert.h>
 #include <stdio.h>
 
-#define SIZE 10
+#define SIZE 128
 
 
 

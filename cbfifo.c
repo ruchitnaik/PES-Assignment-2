@@ -2,6 +2,7 @@
 
 bool created = false;
 
+// Definition
 typedef struct cbfifo_s { 
     uint8_t * buff;
     size_t head, tail;
@@ -14,33 +15,23 @@ typedef struct cbfifo_s {
 cbfifo_t* fifo;
 
 
-bool cbfifo_full()
-{
-	assert(fifo);
-    return fifo->full_status;
-}
 
+// Helper Function
 void cbfifo_free()
 {
 	assert(fifo);
 	free(fifo);
 }
 
+// Helper Function
 bool cbfifo_empty()
 {
 	assert(fifo);
     return (!fifo->full_status && (fifo->head == fifo->tail));
 }
 
-void cbfifo_reset()
-{
-    assert(fifo);
-    fifo->head = 0;
-    fifo->tail = 0;
-    fifo->full_status = false;
-}
-
-static void update_ptr_status()
+// Helper Function
+static void update_head_tail()
 {
 	assert(fifo);
 	if(fifo->full_status) {
@@ -51,7 +42,8 @@ static void update_ptr_status()
     fifo->storedbytes = cbfifo_length();
 }
 
-static void retreat_pointer()
+// Helper Function
+static void reset_tail()
 {
 	assert(fifo);
 	fifo->full_status = false;
@@ -59,83 +51,96 @@ static void retreat_pointer()
 }
 
 void cbfifo_create() {
-
+    // Assigns memory pointer for the Circular Buffer
     fifo = malloc(sizeof(cbfifo_t));
     assert(fifo);
+    //Contiguious Dynamic Memory allocation of upto SIZE 
     fifo-> buff = (uint8_t *)malloc(SIZE * sizeof(uint8_t));
+
+    // Dynamic Memory allocation failure handling
     if(fifo-> buff == NULL) {
         exit(0);
     }
+    // SIZE of buffer
     fifo-> size = SIZE;
+    // Pointer to keep track of the size of the bytes in
+    // Circular Buffer 
     fifo->storedbytes = 0;
+
+    // Helper Pointers for CB
     fifo->head = 0;
     fifo->tail = 0;
+
     fifo->full_status = false;
     fifo->last_nbyte = 0;
     created = true;
 }
 
-
-int cb_handle_overflow(void *buf, size_t nbyte)
+// Helper Function to enque data per byte
+void helper_cbenque(void *buf, size_t nbyte)
 {
-    int r = 0;
     if (buf && fifo->buff) {
+    // Typecasting to 8 bits
     uint8_t *data = (uint8_t*) buf;
     assert(fifo);
-    if(!cbfifo_full(fifo))
-    {
-        for(int i =0; *(uint8_t*) (data + i) != '\0' ; i++) {
-           *(uint8_t*) (fifo->buff + i) = *(uint8_t*) (data + fifo->head);
-            update_ptr_status();
-            r++;
+
+    if(!fifo->full_status) {   
+
+        // Moves the base pointer upto nbytes 
+        for(int i =0; i< nbyte ; i++) {
+        *(uint8_t*) (fifo->buff + i) = *(uint8_t*) (data + fifo->head);
+            update_head_tail();
         }
-        fifo->last_nbyte = r;
+        }
     }
-    return r;
-    }
+    
 
 }
 
 size_t cbfifo_enqueue(void *buf, size_t nbyte) {
 
+    //Asserts that the base struct is created which handles 
+    //The byte storage
     if (!created) {
     cbfifo_create(); 
     }
-    if (created) {
+    if (buf && created && nbyte>=0 && !fifo->full_status) {
 
-        int r = 0;
-        assert(buf && nbyte);
-        size_t len = cbfifo_length();
-        if(len + nbyte > fifo->size) {
+        // assert(buf && nbyte);
+        // Checks if the bytes to be inserted exceeds the 
+        // max capacity of the Circular Buffer  
+        if(cbfifo_length() + nbyte > fifo->size) {
             return -1;
         }
         else {
-            r = cb_handle_overflow(buf, nbyte);
+            helper_cbenque(buf, nbyte);
         }
-        // free(fifo->buff);
         return (fifo->storedbytes);
-        
     }
+    else {
+        return -1;
+    }
+    
 }
 
 
 size_t cbfifo_dequeue(void *buf, size_t nbyte) {
 
     uint8_t *buffer = (uint8_t*) buf;
-    assert(fifo && buffer && fifo->buff);
-    size_t len = cbfifo_length();
-    if(len - nbyte < 0)
-        return -1;
-    
+    size_t len=0;
+    assert(fifo && buffer);
     for(int i=0; i < nbyte; i++) {
-        if(!cbfifo_empty(fifo))
-        {
+        if(!cbfifo_empty(fifo)) {   
+            if(fifo->storedbytes <= 0) {
+                cbfifo_free();
+                return i;
+            }
             *(uint8_t*) (buffer + i) = *(uint8_t*) (fifo->buff + fifo->tail  ) ;
-            retreat_pointer(fifo);
-            len--;
+            reset_tail(fifo); 
+            fifo->storedbytes = cbfifo_length();
+            len++;
         }
     }
-
     return len;
 }
 
