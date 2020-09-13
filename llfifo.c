@@ -40,20 +40,37 @@ typedef struct Node {
 
 // Structure definition for LLFIFO
 typedef struct llfifo_s { 
-    node *front, *rear;
+    node *front, *rear, *start;
     size_t allocatednodes;
     size_t storednodes;
+    int del_nodes;
+    bool created;
+    bool destroy;
     void* val;
 } llfifo_t; 
 
 
 // Helper Function to setup the nodes
-node* newNode(void* ele) 
-{ 
-    node* temp = (node*)malloc(sizeof(node)); 
-    temp->key = ele;
-    temp->next = NULL; 
-    return temp; 
+node* newNode(void* ele, size_t capacity, llfifo_t* fifo) 
+{   
+    if(!fifo->created) {
+        
+        fifo->start = (node*)malloc( capacity * sizeof(node)); 
+        fifo->created = true;
+    }
+    if(fifo->storednodes < fifo->allocatednodes) {
+        node* T = fifo->start;
+        T[fifo->storednodes].key = ele;
+        T[fifo->storednodes].next = NULL;
+        node* temp = &T[fifo->storednodes];
+        return temp; 
+    }
+    else {
+        node* temp2 = (node*)malloc(sizeof(node)); 
+        temp2->key = ele;
+        temp2->next = NULL; 
+        return temp2; 
+    }
 } 
 
 /*
@@ -74,6 +91,9 @@ llfifo_t *llfifo_create(int capacity) {
         fifo->val = NULL;
         fifo->allocatednodes = capacity;
         fifo->front = fifo->rear = NULL; 
+        fifo->created = false;
+        fifo->destroy = false;
+        fifo->del_nodes = 0;
         return fifo;
     }
     else 
@@ -122,7 +142,7 @@ int llfifo_capacity(llfifo_t *fifo) {
 int llfifo_enqueue(llfifo_t *fifo, void *element) {
     if(fifo) {
         // Create a new LL node 
-        node* temp = newNode(element);
+        node* temp = newNode(element, fifo->allocatednodes, fifo);
 
         // If queue is empty, then new node is front and rear both 
         if (fifo->rear == NULL) { 
@@ -152,11 +172,14 @@ int llfifo_enqueue(llfifo_t *fifo, void *element) {
  *   The dequeued element, or NULL if the FIFO was empty
  */
 void *llfifo_dequeue(llfifo_t *fifo) {
+    if(!fifo->destroy) {
+        fifo->destroy = true;
+        fifo->storednodes--;
+    }
     // If queue is empty, return NULL. 
     if (fifo->storednodes <= 0) {
         fifo->front = NULL;
         fifo->rear = NULL; 
-        printf("\n returning NULL ");
         return NULL; 
     }
     // Store previous front and move front one node ahead 
@@ -168,8 +191,13 @@ void *llfifo_dequeue(llfifo_t *fifo) {
         fifo->rear = NULL; 
         fifo->storednodes = 0;
     }
+
     fifo->val = temp->key;
-    free(temp);
+    if(  ! ( fifo->del_nodes <= fifo->allocatednodes-1 ))
+        free(temp);
+
+    
+    fifo->del_nodes++;
     return fifo->val;
 }
 
@@ -185,13 +213,16 @@ void *llfifo_dequeue(llfifo_t *fifo) {
  *   none
  */
 void llfifo_destroy(llfifo_t *fifo) {
-
+    printf("\n Length in destroy: %ld", fifo->storednodes);
     if(fifo) {
-        while(fifo->storednodes != 0) {
-            llfifo_dequeue(fifo);
-        }
-        free(fifo);
-        return;
+            while(( fifo->del_nodes <= fifo->allocatednodes-1 ))
+                llfifo_dequeue(fifo); 
+            // free(fifo->start);
+            free(fifo);
+            // while(fifo->storednodes <= 0) {
+            //     llfifo_dequeue(fifo);
+            // }
+            return;   
     }
     else {
         return;
