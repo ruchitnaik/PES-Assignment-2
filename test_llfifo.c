@@ -130,7 +130,7 @@ int test_llfifo_enqueue()
   }
 
   printf("\n %s: PASSED %d/%d\n", __FUNCTION__, tests_passed, num_tests);
-  llfifo_destroy(fifo);
+  // llfifo_destroy(fifo);
   return (tests_passed == num_tests);
 }
 
