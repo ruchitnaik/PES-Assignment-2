@@ -6,7 +6,15 @@ int main() {
 
     success &= llfifo_main();
     success &= cbfifo_main();
-
+    printf("\n LOL");
+    printf("\nLOL");
+    printf("\n LOL");
+    printf("\n LOL");
+    printf("\n LOL");
+    printf("\n LOL");
+    printf("\n LOL");
+    printf("\n LOL");
+    printf("\n LOL");
     if (success)
         printf("All tests succeeded\n");
     else
