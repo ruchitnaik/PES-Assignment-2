@@ -59,7 +59,6 @@ node* newNode(void* ele, size_t capacity, llfifo_t* fifo)
         fifo->created = true;
     }
     int loc = llfifo_length(fifo);
-    // printf("\n LOC : %d", loc);
     if(loc <= fifo->allocatednodes - 1) {
         node* T = fifo->start;
         T[loc].key = ele;
@@ -183,7 +182,6 @@ void *llfifo_dequeue(llfifo_t *fifo) {
     }
 
     if(fifo->del_nodes == fifo->storednodes - 1) {
-        printf("\n TRUe");
         node* temp = fifo->front; 
         fifo->val = temp->key;
         fifo->del_nodes++;
@@ -228,8 +226,6 @@ void *llfifo_dequeue(llfifo_t *fifo) {
 void llfifo_destroy(llfifo_t *fifo) {
     if (fifo) {
         while( llfifo_length(fifo) > llfifo_capacity(fifo) ) {
-            printf("\n Del Nodes:%d", fifo->del_nodes);
-            printf("\n Length:%d", llfifo_length(fifo));
             llfifo_dequeue(fifo); 
         }
         fifo->del_nodes = fifo->storednodes;

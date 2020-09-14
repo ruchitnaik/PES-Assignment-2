@@ -177,7 +177,6 @@ int test_llfifo_dequeue()
 
   for(int i=0; i<num_tests; i++) {
     act_ret = llfifo_dequeue(fifo);
-    printf("\ni: %d", i);
     if ( *(int*)act_ret == *(int*) tests[i].expected_res)  {
       test_result = "PASSED";
       tests_passed++;
@@ -232,58 +231,12 @@ int test_llfifo_capacity() {
   return (tests_passed == num_tests);
 }
 
-// // int llfifo_main() {
-// int main() {
-//   int pass = 1;
-//   // pass &= test_llfifo_create();
-//   // pass &= test_llfifo_enqueue();
-//   pass &= test_llfifo_dequeue();
-//   // pass &= test_llfifo_capacity();
+int llfifo_main() {
+  int pass = 1;
+  pass &= test_llfifo_create();
+  pass &= test_llfifo_enqueue();
+  pass &= test_llfifo_dequeue();
+  pass &= test_llfifo_capacity();
   
-//   return pass;
-// }
-
-int main() {
-
-  // int cap = 10;  // could be any number
-  // llfifo_t *fifo = llfifo_create(cap);
-  // printf("\n Capacity : %d", llfifo_capacity(fifo));
-  // assert(llfifo_capacity(fifo) == cap);
-  void * ptr;
-  llfifo_t* fifo = llfifo_create(5);
-  assert (llfifo_length(fifo) == 0);
-  assert (llfifo_capacity(fifo) == 5);
-  int len = 0;
-  len = llfifo_enqueue(fifo, "Sleepy");   // does not result in a malloc (len = 1, cap = 5)
-  // printf("\n  ll : %d", len);
-  // assert (llfifo_length(fifo) == 1);
-  // assert (llfifo_capacity(fifo) == 5);
-  len = llfifo_enqueue(fifo, "Grumpy");   // does not result in a malloc (len = 2, cap = 5)
-  // printf("\n  ll : %d", len);
-  // assert (llfifo_length(fifo) == 2);
-  // assert (llfifo_capacity(fifo) == 5);
-  len = llfifo_enqueue(fifo, "Sneezy");   // does not result in a malloc (len = 3, cap = 5)
-  // printf("\n  ll : %d", len);
-  // assert (llfifo_length(fifo) == 3);
-  // assert (llfifo_capacity(fifo) == 5);
-  len = llfifo_enqueue(fifo, "Happy");    // does not result in a malloc (len = 4, cap = 5)
-  // printf("\n  ll : %d", len);
-  // assert (llfifo_length(fifo) == 4);
-  // assert (llfifo_capacity(fifo) == 5);
-  len = llfifo_enqueue(fifo, "Bashful");  // does not result in a malloc (len = 5, cap = 5)
-  assert (llfifo_length(fifo) == 5);
-  assert (llfifo_capacity(fifo) == 5);
-
-  ptr = llfifo_dequeue(fifo);             // removes "Sleepy"; len = 4, cap = 5
-  assert (llfifo_length(fifo) == 4);
-  assert (llfifo_capacity(fifo) == 5);
-  llfifo_enqueue(fifo, "Dopey");    // does not result in a malloc (len = 5, cap = 5)
-  assert (llfifo_length(fifo) == 5);
-  assert (llfifo_capacity(fifo) == 5);
-  
-  llfifo_enqueue(fifo, "Doc");      // DOES result in a malloc (len = 6, cap = 6)
-  assert (llfifo_length(fifo) == 6);
-  assert (llfifo_capacity(fifo) == 6);
-  llfifo_destroy(fifo);
-  printf("\n ALL PASSED");
+  return pass;
 }
