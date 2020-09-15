@@ -71,5 +71,50 @@ size_t cbfifo_length();
  */
 size_t cbfifo_capacity();
 
+/*
+ * Helper function to check if the cB is empty 
+ *
+ * Parameters:
+ *   none
+ * 
+ * Returns:
+ *   none
+ */
+bool cbfifo_empty();
+
+/*
+ * Helper function to update head and tail pointer to keep track of the CB 
+ *
+ * Parameters:
+ *   none
+ * 
+ * Returns:
+ *   none
+ */
+static void update_head_tail();
+
+
+/*
+ * Helper Function to reset tail incase of over flow  
+ *
+ * Parameters:
+ *   none
+ * 
+ * Returns:
+ *   none
+ */
+static void reset_tail();
+
+/*
+ * Helper Function to enque data per byte  
+ *
+ * Parameters:
+ *   buf      Pointer to the data
+ *   nbyte    Max number of bytes to enqueue
+ * 
+ * Returns:
+ *   none
+ */
+void helper_cbenque(void *buf, size_t nbyte);
 
 #endif // _CBFIFO_H_

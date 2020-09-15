@@ -2,7 +2,7 @@
  * llfifo.h - a dynamically-growing FIFO
  * 
  * Author: Howdy Pierce, howdy.pierce@colorado.edu
- * 
+ * Modeified : Arpit Savarakara, arpit.savarkar@colorado.edu
  */
 
 #ifndef _LLFIFO_H_

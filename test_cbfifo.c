@@ -175,8 +175,6 @@ int test_cbfifo_dequeue()
 
   printf("\n %s: PASSED %d/%d\n", __FUNCTION__, tests_passed, num_tests);
   
-  // Necesarry Function Since the fucntion is created dynamically 
-  // cbfifo_free();
   return (tests_passed == num_tests);
 }
 
@@ -188,7 +186,5 @@ int cbfifo_main()
     pass &= test_cbfifo_capacity();
     pass = test_cbfifo_length();
     pass = test_cbfifo_dequeue();
-    free(fifo->buff);
-    cbfifo_free();
     return pass;
 }

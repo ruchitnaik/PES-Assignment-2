@@ -44,16 +44,10 @@ typedef struct cbfifo_s {
     size_t storedbytes;
 } cbfifo_t; 
 
-cbfifo_t* fifo;
+cbfifo_t my_fifo;
+cbfifo_t* fifo = &my_fifo;
+uint8_t CBbuffer[SIZE];
 
-
-
-// Helper Function to free dynamically created memory 
-void cbfifo_free()
-{
-	assert(fifo);
-	free(fifo);
-}
 
 // Helper Function
 bool cbfifo_empty()
@@ -86,10 +80,11 @@ static void reset_tail()
 }
 
 void cbfifo_create() {
-    // Assigns memory pointer for the Circular Buffer
-    fifo = (cbfifo_t*)malloc(sizeof(cbfifo_t));
+    // // Assigns memory pointer for the Circular Buffer
+    // fifo = (cbfifo_t*)malloc(sizeof(cbfifo_t));
     //Contiguious Dynamic Memory allocation of upto SIZE 
-    fifo-> buff = (uint8_t *)malloc(SIZE * sizeof(uint8_t));
+    // fifo-> buff = (uint8_t *)malloc(SIZE * sizeof(uint8_t));
+    fifo-> buff = CBbuffer;
     // Dynamic Memory allocation failure handling
     for(int i = 0; i < SIZE; i++)
         fifo-> buff[i] = 0;
@@ -197,7 +192,7 @@ size_t cbfifo_dequeue(void *buf, size_t nbyte) {
             // Stored bytes checks the size of the
             // Buffer 
             if(fifo->storedbytes <= 0) {
-                cbfifo_free();
+                // cbfifo_free();
                 return i;
             }
             // Dequues from the front where the tail is 
@@ -255,6 +250,8 @@ size_t cbfifo_capacity() {
     // The Max capacity of the circular buffer 
     return fifo->size;
 }
+
+
 
 #endif // _CBFIFO_C_
 
