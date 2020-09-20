@@ -35,41 +35,51 @@
 // Definition of the Node of the Linked List 
 typedef struct Node { 
     void* key; 
+    bool is_dynamic;
     struct Node* next; 
 } node; 
 
 // Structure definition for LLFIFO
 typedef struct llfifo_s { 
-    node *front, *rear, *start;
+    node *front, *rear, *start, *del;
     size_t allocatednodes;
     size_t storednodes;
     int del_nodes;
     bool created;
     bool destroy;
-    void* val;
+    size_t cap; // Extra Capacity Storage
 } llfifo_t; 
 
 
 // Helper Function to setup the nodes
-node* newNode(void* ele, size_t capacity, llfifo_t* fifo) 
-{   
-    if(!fifo->created) {
-        
+node* newNode(void* ele, size_t capacity, llfifo_t* fifo)  {   
+
+    if(!fifo->created ) {
         fifo->start = (node*)malloc( capacity * sizeof(node)); 
+        fifo->front = NULL; 
+        fifo->rear = NULL;
         fifo->created = true;
+        fifo->storednodes = 0;
     }
-    int loc = llfifo_length(fifo);
-    if(loc <= fifo->allocatednodes - 1) {
+    // int loc = llfifo_length(fifo);
+    if(fifo->storednodes)
+    int loc = fifo->storednodes;
+    if(loc <= fifo->allocatednodes - 1 && capacity != 0 ) {
+        printf("\n LOC: %d", loc);
+        printf("\n INSIDE");
         node* T = fifo->start;
+        assert(fifo->start);
         T[loc].key = ele;
         T[loc].next = NULL;
-        node* temp = &T[loc];
-        return temp; 
+        T[loc].is_dynamic = false;
+        return &T[loc]; 
     }
     else {
+        printf("\n OUTSIDE");
         node* temp2 = (node*)malloc(sizeof(node)); 
         temp2->key = ele;
         temp2->next = NULL; 
+        temp2->is_dynamic = true;
         return temp2; 
     }
 } 
@@ -87,11 +97,13 @@ llfifo_t *llfifo_create(int capacity) {
     if(capacity >= 0) {
         // Dynamic Allocation of the Base
         llfifo_t* fifo = (llfifo_t*)malloc(sizeof(llfifo_t));
+        assert(fifo);
         // Initially No Nodes Stored
         fifo->storednodes = 0;
-        fifo->val = NULL;
         fifo->allocatednodes = capacity;
-        fifo->front = fifo->rear = NULL; 
+        fifo->cap = 0;
+        fifo->front = NULL; 
+        fifo->rear = NULL; 
         fifo->created = false;
         fifo->destroy = false;
         fifo->del_nodes = 0;
@@ -112,7 +124,14 @@ llfifo_t *llfifo_create(int capacity) {
  *   The number of elements currently on the FIFO
  */
 int llfifo_length(llfifo_t *fifo) {
-    return (fifo->storednodes - fifo->del_nodes);
+    int count = 0;  // Initialize count 
+    node* current = fifo->rear;  // Initialize current 
+    while (current != NULL) 
+    { 
+        count++; 
+        current = current->next; 
+    } 
+    return count; 
 }
 
 /*
@@ -125,8 +144,11 @@ int llfifo_length(llfifo_t *fifo) {
  *   The current capacity, in number of elements, for the FIFO
  */
 int llfifo_capacity(llfifo_t *fifo) {
-    if( llfifo_length(fifo) > fifo->allocatednodes ) {
-        return llfifo_length(fifo);
+    // if( llfifo_length(fifo) >= fifo->allocatednodes ) {
+    if( fifo->cap >= fifo->allocatednodes ) {
+        // printf("\n Allocated Nodes %d", fifo->allocatednodes);
+        // printf("\n Cap %d", fifo->cap);
+        return fifo->cap;
     }
     else 
         return fifo->allocatednodes;
@@ -147,18 +169,27 @@ int llfifo_enqueue(llfifo_t *fifo, void *element) {
     if(fifo) {
         // Create a new LL node 
         node* temp = newNode(element, fifo->allocatednodes, fifo);
-
+        printf("\n Enqueing");
+        printf("\n Stored Nodes: %ld", fifo->storednodes);
         // If queue is empty, then new node is front and rear both 
         if (fifo->rear == NULL) { 
-            fifo->front = fifo->rear = temp; 
+            printf("\n DEfronting");
+            fifo->rear = fifo->front = temp;
+            fifo->del = temp;
             fifo->storednodes++;
-            return llfifo_length(fifo);
         } 
-        // Add the new node at the end of queue and change rear 
-        fifo->rear->next = temp; 
-        fifo->rear = temp;
-        fifo->storednodes++; 
-        return llfifo_length(fifo);
+        else {
+            printf("\n Fronting");
+            // Add the new node at the end of queue and change rear 
+            fifo->front->next = temp;
+            fifo->front = temp;
+            fifo->storednodes++;
+        }
+
+        if(fifo->storednodes >= fifo->cap)
+            fifo->cap = fifo->storednodes;
+        
+        return (llfifo_length(fifo));
     }
     else {
             return -1;
@@ -179,37 +210,42 @@ void *llfifo_dequeue(llfifo_t *fifo) {
 
     if(!fifo->destroy) {
         fifo->destroy = true;
+        if (fifo->storednodes == 0)
+            return NULL;
     }
+    
+    node* temp;
+    void* ret = fifo->rear->key;
 
-    if(fifo->del_nodes == fifo->storednodes - 1) {
-        node* temp = fifo->front; 
-        fifo->val = temp->key;
-        fifo->del_nodes++;
-        return fifo->val;
-    }
+    temp = fifo->rear;
+    fifo->rear = fifo->rear->next;
+    fifo->storednodes--;
+
 
     // If queue is empty, return NULL. 
-    // if (fifo->storednodes <= 0) {
-    if (llfifo_length(fifo) <= 0) {
-        fifo->front = NULL;
-        fifo->rear = NULL; 
-        return NULL; 
-    }
-    // Store previous front and move front one node ahead 
-    node* temp = fifo->front; 
-    fifo->front = fifo->front->next; 
-    // If front becomes NULL, then change rear also as NULL 
-    if (fifo->front == NULL ) {
-        fifo->rear = NULL; 
+    if (fifo->rear == NULL) {
+        printf("\n REAR OBV IS NULL");
+        fifo->storednodes = 0;
         return NULL; 
     }
 
-    fifo->val = temp->key;
-    if(llfifo_capacity(fifo) > fifo->allocatednodes) {
+    // Store previous front and move front one node ahead 
+
+    node* temp = fifo->rear;
+    fifo->rear = fifo->rear->next; 
+    fifo->storednodes--;
+    // If rear becomes NULL, then change front also as NULL 
+    if (fifo->rear == NULL) {
+        fifo->front = NULL;
+        printf("\n REAR IS NULL");
+        fifo->storednodes = 0;
+    }
+
+
+    if(temp->is_dynamic == true) {
         free(temp);
     }
-    fifo->del_nodes++;
-    return fifo->val;
+    return ret;
 }
 
 /*
@@ -224,13 +260,14 @@ void *llfifo_dequeue(llfifo_t *fifo) {
  *   none
  */
 void llfifo_destroy(llfifo_t *fifo) {
+    int counter = 0;
     if (fifo) {
-        while( llfifo_length(fifo) > llfifo_capacity(fifo) ) {
-            llfifo_dequeue(fifo); 
-        }
-        fifo->del_nodes = fifo->storednodes;
+        while(llfifo_length(fifo) > fifo->allocatednodes)
+            llfifo_dequeue(fifo);
+
+        // printf("\n Freeing Data starting from %c", *(char*)fifo->del->key);
         free(fifo->start);
-        free(fifo);  
+        free(fifo); 
     }
     else {
         free(fifo); 
