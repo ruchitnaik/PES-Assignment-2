@@ -1,242 +1,172 @@
-/******************************************************************************
-*​​Copyright​​ (C) ​​2020 ​​by ​​Arpit Savarkar
-*​​Redistribution,​​ modification ​​or ​​use ​​of ​​this ​​software ​​in​​source​ ​or ​​binary
-*​​forms​​ is​​ permitted​​ as​​ long​​ as​​ the​​ files​​ maintain​​ this​​ copyright.​​ Users​​ are
-*​​permitted​​ to ​​modify ​​this ​​and ​​use ​​it ​​to ​​learn ​​about ​​the ​​field​​ of ​​embedded
-*​​software. ​​Arpit Savarkar ​​and​ ​the ​​University ​​of ​​Colorado ​​are ​​not​ ​liable ​​for
-*​​any ​​misuse ​​of ​​this ​​material.
-*
-******************************************************************************/ 
-/**
- * @file test_llfifo.c
- * @brief An abstraction to test the functionalities of Linked List Based 
- * Queue (FIFO) in llfifo.c 
+/*
+ * test_llfifo.c - test the llfifo implementation
  * 
- * This file provides functions and abstractions for handling and
- * manipulating Circular Buffer
+ * Author: Howdy Pierce, howdy.pierce@colorado.edu
  * 
- * @author Arpit Savarkar
- * @date September 10 2020
- * @version 1.0
- * 
- * 
-  Sources of Reference :
-  Online Links : https://github.com/geekfactory/FIFO/blob/master/FIFO.h
-  Textbooks : Embedded Systems Fundamentals with Arm Cortex-M based MicroControllers 
-  I would like to thank the SA's of the course Rakesh Kumar, Saket Penurkar and Howdy Pierece for their 
-  support to debug the Linkedlist FIFO Implementation
-*/
+ */
 
-#include "llfifo.c"
+#include <stdio.h>
+#include <assert.h>
+#include <stdint.h>
 
-int test_llfifo_create()
+#include "test_llfifo.h"
+#include "llfifo.h"
+
+#define max(x,y) ((x) > (y) ? (x) : (y))
+
+static int g_tests_passed = 0;
+static int g_tests_total = 0;
+static int g_skip_tests = 0;
+
+#define test_assert(value) {                                            \
+  g_tests_total++;                                                      \
+  if (!g_skip_tests) {                                                  \
+    if (value) {                                                        \
+      g_tests_passed++;                                                 \
+    } else {                                                            \
+      printf("ERROR: test failure at line %d\n", __LINE__);             \
+      g_skip_tests = 1;                                                 \
+    }                                                                   \
+  }                                                                     \
+}
+
+#define test_equal(value1, value2) {                                    \
+  g_tests_total++;                                                      \
+  if (!g_skip_tests) {                                                  \
+    long res1 = (long)(value1);                                         \
+    long res2 = (long)(value2);                                         \
+    if (res1 == res2) {                                                 \
+      g_tests_passed++;                                                 \
+    } else {                                                            \
+      printf("ERROR: test failure at line %d: %ld != %ld\n", __LINE__, res1, res2); \
+      g_skip_tests = 1;                                                 \
+    }                                                                   \
+  }                                                                     \
+}
+
+static void
+test_llfifo_one_iteration(int capacity)
 {
-  typedef struct {
-    int capacity;
-    llfifo_t *expected_val;
-  } test_matrix_t;
-
-  llfifo_t* fifo =llfifo_create(0);
-  test_matrix_t tests[] =
-    { 
-      {-1, NULL},
-      {0, NULL},
-      {1, fifo},
-      {2, fifo} 
+  char *strs[] =
+    { "To be, or not to be: that is the question:",
+      "Whether 'tis nobler in the mind to suffer",
+      "The slings and arrows of outrageous fortune,",
+      "Or to take arms against a sea of troubles,",
+      "And by opposing end them? To die, to sleep—",
+      "No more—and by a sleep to say we end",
+      "The heart-ache and the thousand natural shocks",
+      "That flesh is heir to, 'tis a consummation",
+      "Devoutly to be wish'd. To die, to sleep;",
+      "To sleep: perchance to dream: ay, there's the rub;",
+      "For in that sleep of death what dreams may come",
+      "When we have shuffled off this mortal coil,",
+      "Must give us pause."
     };
 
-  const int num_tests = sizeof(tests) / sizeof(test_matrix_t);
-  int tests_passed = 0;
-  char *test_result;
+  const int strs_len = sizeof(strs) / sizeof(const char *);
+  llfifo_t *fifo;
 
-  for(int i=0; i<num_tests; i++) {
-    fifo = llfifo_create(tests[i].capacity);
+  fifo = llfifo_create(capacity);
+  test_assert(fifo != NULL);
 
-    if ((tests[i].capacity >=0) && (fifo !=NULL)) {
-      test_result = "PASSED";
-      tests_passed++;
-      printf(" \n %s: llfifo_create(%d) returned %ld", test_result, tests[i].capacity, fifo->allocatednodes);
-    } 
-    else if ( ( (fifo == NULL) && tests[i].capacity <0)) {
-      test_result = "PASSED";
-      tests_passed++;
-      printf(" \n %s: llfifo_create(%d) returned NULL", test_result, tests[i].capacity);
-    }
-    else {
-      printf(" \n %s: llfifo_create(%d) returned Illegal size", test_result, tests[i].capacity);
-      test_result = "FAILED";
-    }
+  test_equal(llfifo_capacity(fifo), capacity);
+  test_equal(llfifo_length(fifo), 0);
+  test_equal(llfifo_dequeue(fifo), NULL);
 
+  // enqueue one element, then dequeue it, make sure it all matches
+  test_equal(llfifo_enqueue(fifo, strs[0]), 1);
+  test_equal(llfifo_capacity(fifo), max(capacity, 1));
+  test_equal(llfifo_length(fifo), 1);
+  test_equal(llfifo_dequeue(fifo), strs[0]);
+  test_equal(llfifo_capacity(fifo), max(capacity, 1));
+  test_equal(llfifo_length(fifo), 0);
+
+  // enqueue all the elements, then dequeue all
+  for (int i=0; i<strs_len; i++) {
+    test_equal(llfifo_enqueue(fifo, strs[i]), i+1);
+    test_equal(llfifo_capacity(fifo), max(capacity, i+1));
+    test_equal(llfifo_length(fifo), i+1);
+  }
+  for (int i=0; i<strs_len; i++) {
+    test_equal(llfifo_dequeue(fifo), strs[i]);
+    test_equal(llfifo_length(fifo), strs_len - i - 1);
+    test_equal(llfifo_capacity(fifo), max(capacity, strs_len));
   }
 
-  printf("\n%s: PASSED %d/%d\n", __FUNCTION__, tests_passed, num_tests);
+  // should be empty now
+  test_equal(llfifo_length(fifo), 0);
+  test_equal(llfifo_dequeue(fifo), NULL);
+  test_equal(llfifo_capacity(fifo), max(capacity, strs_len));
+
+  // enqueue one, then enqueue one, dequeue one, etc, through the whole list
+  test_equal(llfifo_enqueue(fifo, strs[0]), 1);
+  for (int i=1; i<strs_len; i++) {
+    test_equal(llfifo_enqueue(fifo, strs[i]), 2);
+    test_equal(llfifo_length(fifo), 2);
+    test_equal(llfifo_dequeue(fifo), strs[i-1]);
+    test_equal(llfifo_length(fifo), 1);
+    test_equal(llfifo_capacity(fifo), max(capacity, strs_len));
+  }
+  test_equal(llfifo_dequeue(fifo), strs[strs_len-1]);
+  
+  // should be empty now
+  test_equal(llfifo_length(fifo), 0);
+  test_equal(llfifo_dequeue(fifo), NULL);
+  test_equal(llfifo_capacity(fifo), max(capacity, strs_len));
+
+  // create a second fifo
+  const int capacity2 = 3;
+  llfifo_t *fifo2;
+
+  fifo2 = llfifo_create(capacity2);
+  test_assert(fifo2 != NULL);
+  test_equal(llfifo_capacity(fifo2), capacity2);
+  test_equal(llfifo_length(fifo2), 0);
+  test_equal(llfifo_dequeue(fifo2), NULL);
+
+  // enqueuing the even numbered strings onto the second fifo, and the
+  // odd numbered strings onto the original fifo
+  for (int i=0; i<strs_len; i++) {
+    llfifo_t * this_fifo = (i & 0x1) ? fifo : fifo2;
+    test_equal(llfifo_enqueue(this_fifo, strs[i]), (i/2)+1);
+    test_equal(llfifo_length(this_fifo), (i/2)+1);
+  }
+  test_equal(llfifo_capacity(fifo), max(capacity, strs_len));
+  test_equal(llfifo_capacity(fifo2), max(capacity2, strs_len/2 + 1));
+
+  // now dequeue and make sure everything comes out correctly
+  for (int i=0; i<strs_len; i++) {
+    llfifo_t * this_fifo = (i & 0x1) ? fifo : fifo2;
+    test_equal(llfifo_dequeue(this_fifo), strs[i]);
+  }
+  test_equal(llfifo_length(fifo), 0);
+  test_equal(llfifo_length(fifo2), 0);
+  test_equal(llfifo_dequeue(fifo), NULL);
+  test_equal(llfifo_dequeue(fifo2), NULL);
+
+  test_equal(llfifo_capacity(fifo), max(capacity, strs_len));
+  test_equal(llfifo_capacity(fifo2), max(capacity2, strs_len/2 + 1));
+
   llfifo_destroy(fifo);
-  return (tests_passed == num_tests);
+  llfifo_destroy(fifo2);
 }
 
-int test_llfifo_enqueue()
-{ 
-  llfifo_t* fifo;
-  llfifo_t* gigo;
-  fifo = llfifo_create(6);
-  gigo = llfifo_create(-1);
-  typedef struct {
-    void* element;
-    int expected_res;
-  } test_matrix_t;
+
+void test_llfifo()
+{
+  g_tests_passed = 0;
+  g_tests_total = 0;
+  g_skip_tests = 0;
   
-  int act_ret;
-  size_t temp_len = 10;
-  act_ret = llfifo_enqueue(gigo, &temp_len);
-  llfifo_destroy(gigo);
-
-  if (act_ret == -1 ) {
-    printf("\n  PASSED: Enquining to Uninitialized FIFO returned null ");
-  } else {
-    printf("\n Uninitialized test failed ");
-  }
-
-  typedef struct test_struct {
-    int x;
-    char y;
-  } test_st;
-  test_st object;
-  object.x = 1;
-  object.y = 'a';
-  test_matrix_t tests[] =
-    { 
-      {(void*)INT8_MAX, 1},
-      {(void*)INT16_MAX, 2},
-      {(void*)INT32_MAX, 3},
-      {&object, 4},
-      {NULL, 5}
-    };
-
-  const int num_tests = sizeof(tests) / sizeof(test_matrix_t);
-  int tests_passed = 0;
-  char *test_result;
-
-  for(int i=0; i<num_tests; i++) {
-    act_ret = llfifo_enqueue(fifo, tests[i].element);
-
-    if (act_ret == tests[i].expected_res ) {
-      test_result = "PASSED";
-      tests_passed++;
-    } else {
-      test_result = "FAILED";
-    }
-    
-    printf("\n  %s: llfifo_enqueue(fifo, %p) returned %d expected %d ", test_result,
-        tests[i].element, act_ret, tests[i].expected_res);
-  }
-
-  printf("\n %s: PASSED %d/%d\n", __FUNCTION__, tests_passed, num_tests);
-  llfifo_destroy(fifo);
-  return (tests_passed == num_tests);
-}
-
-int test_llfifo_dequeue()
-{ 
-  llfifo_t* fifo;
-  fifo = llfifo_create(6);
-  int a = INT8_MAX;
-  int b = INT16_MAX;
-  int c = INT32_MAX;
-  char str[] = "papiha";
-
-  size_t len = llfifo_enqueue(fifo, &a);
-  len = llfifo_enqueue(fifo, &b);
-  len = llfifo_enqueue(fifo, &c);
-  len = llfifo_enqueue(fifo, str);
-  len = llfifo_enqueue(fifo, &a);
-  len = llfifo_enqueue(fifo, &b);
-  len = llfifo_enqueue(fifo, &c);
-  if(len==0) {
-    len = 0;
-    return 0;
-  }
-  typedef struct {
-    void* expected_res;
-  } test_matrix_t;
+  test_llfifo_one_iteration(0);
+  g_skip_tests = 0;
   
-  void* act_ret;
-  test_matrix_t tests[] =
-    { 
-      {&a},
-      {&b},
-      {&c},
-      {str},
-      {&a},
-      {&b},
-      {&c}
-    };
+  test_llfifo_one_iteration(5);
+  g_skip_tests = 0;
 
-  const int num_tests = sizeof(tests) / sizeof(test_matrix_t);
-  int tests_passed = 0;
-  char *test_result;
+  test_llfifo_one_iteration(20);
+  g_skip_tests = 0;
 
-  for(int i=0; i<num_tests; i++) {
-    act_ret = llfifo_dequeue(fifo);
-    if ( *(int*)act_ret == *(int*) tests[i].expected_res)  {
-      test_result = "PASSED";
-      tests_passed++;
-    } else {
-      test_result = "FAILED";
-    }
-    
-    printf("\n  %s: llfifo_dequeue() returned %d expected %d ", test_result,
-          *(int*)act_ret, *(int*) tests[i].expected_res);
-  }
-
-  printf("\n %s: PASSED %d/%d\n", __FUNCTION__, tests_passed, num_tests);
-  llfifo_destroy(fifo);
-  return (tests_passed == num_tests);
-}
-
-int test_llfifo_capacity() {
-
-  llfifo_t* fifo;
-
-  typedef struct {
-    int expected_res;
-  } test_matrix_t;
-  
-  int act_ret;
-  test_matrix_t tests[] =
-    { 
-      {1},
-      {2},
-      {3}
-    };
-
-  const int num_tests = sizeof(tests) / sizeof(test_matrix_t);
-  int tests_passed = 0;
-  char *test_result;
-  for(int i=0; i<num_tests; i++) {
-    fifo = llfifo_create(tests[i].expected_res);
-    act_ret = fifo->allocatednodes;
-    if ( act_ret ==  tests[i].expected_res)  {
-      test_result = "PASSED";
-      tests_passed++;
-    } else {
-      test_result = "FAILED";
-    }
-    
-    printf("\n  %s: llfifo_length() returned %d expected %d ", test_result,
-          act_ret, tests[i].expected_res);
-  }
-
-  printf("\n %s: PASSED %d/%d\n", __FUNCTION__, tests_passed, num_tests);
-  llfifo_destroy(fifo);
-  return (tests_passed == num_tests);
-}
-
-int llfifo_main() {
-  int pass = 1;
-  pass &= test_llfifo_create();
-  pass &= test_llfifo_enqueue();
-  pass &= test_llfifo_dequeue();
-  pass &= test_llfifo_capacity();
-  
-  return pass;
+  printf("%s: passed %d/%d test cases (%2.1f%%)\n", __FUNCTION__,
+      g_tests_passed, g_tests_total, 100.0*g_tests_passed/g_tests_total);
 }

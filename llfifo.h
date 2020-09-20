@@ -2,7 +2,7 @@
  * llfifo.h - a dynamically-growing FIFO
  * 
  * Author: Howdy Pierce, howdy.pierce@colorado.edu
- * Modeified : Arpit Savarakara, arpit.savarkar@colorado.edu
+ * Modeified : Arpit Savarakar, arpit.savarkar@colorado.edu
  */
 
 #ifndef _LLFIFO_H_
@@ -10,7 +10,6 @@
 
 #include <stdlib.h>
 #include <stdint.h>
-#include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>

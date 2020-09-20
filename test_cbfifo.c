@@ -27,7 +27,8 @@
   support to debug the Cirular Buffer Implementation
 */
 
-#include "cbfifo.c"
+#include "test_cbfifo.h"
+#include "cbfifo.h"
 
 int test_cbfifo_enqueue()
 { 

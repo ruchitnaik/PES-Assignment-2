@@ -1,10 +1,16 @@
-#include "test_llfifo.c"
-#include "test_cbfifo.c"
+#ifndef _TEST_LLFIFO_H_
+#include "test_llfifo.h"
+#endif // _TEST_LLFIFO_H_
 
+#ifndef _TEST_CBFIFO_H_
+#include "test_cbfifo.h"
+#endif // _TEST_CBFIFO_H_
+
+#include<stdio.h>
 int main() {
     int success = 1;
 
-    success &= llfifo_main();
+    test_llfifo();
     success &= cbfifo_main();
     if (success)
         printf("All tests succeeded\n");
